@@ -53,6 +53,7 @@ if __name__ == '__main__':
     id_attribute_dict, classSymbol_attributes_dict, className_wordEmbeddings_dict, className_classSymbol_dict, \
     train_class_symbol, train_image_path_list, test_image_path_list = get_all_data(logger)
 
+
     if config.sample_test is not None:
         train_class_symbol = train_class_symbol[: config.sample_test]
         train_image_path_list = train_image_path_list[: config.sample_test]
