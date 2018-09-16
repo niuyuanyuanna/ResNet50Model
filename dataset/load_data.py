@@ -5,6 +5,11 @@
 # @Site    : www.niuyuanyuanna@github.io
 import logging
 import os
+from random import shuffle
+
+import tensorflow as tf
+
+from config.config import config
 
 
 def merge_attributes(attribute_list):
@@ -129,3 +134,51 @@ def load_image_and_class_symbol(trainImageDirPath_list, trainImageName_classSymb
         return image
     else:
         return image, label
+
+
+def formate_train_class_num_list(train_class_symbol, className_classSymbol_dict):
+    train_class_id = []
+    classSymbol_id_dict = {}
+    for i, className_symbol in enumerate(className_classSymbol_dict):
+        classSymbol_id_dict[className_symbol] = i
+    for class_symbol in train_class_symbol:
+        train_class_id.append(classSymbol_id_dict[class_symbol])
+    return train_class_id
+
+
+def shuffle_dataset(train_image_path_list, train_class_id):
+    temp = list(zip(train_image_path_list, train_class_id))
+    shuffle(temp)
+    train_image_path_list, train_class_id = zip(*temp)
+    return train_image_path_list, train_class_id
+
+
+def split_dateset(train_image_path_list, train_class_id):
+    len_val = int(len(train_class_id) * config.train.split_val)
+    val_image_path_list = train_image_path_list[: len_val]
+    val_class_id = train_class_id[:len_val]
+
+    train_image_path_list = train_image_path_list[len_val:]
+    train_class_id = train_class_id[len_val:]
+    return val_image_path_list, val_class_id, train_image_path_list, train_class_id
+
+
+def get_train_and_val_data():
+    id_attribute_dict = merge_attributes(config.dataset.id_attribute_list)
+    classSymbol_attributes_dict = merge_attributes_per_class(config.dataset.classSymbol_attributes_list)
+    className_wordEmbeddings_dict = merge_class_wordembeddings(config.dataset.className_wordEmbeddings_list)
+    className_classSymbol_dict = merge_class_symbol_class_name(config.dataset.className_classSymbol_list)
+
+    # load data and label for train and test
+    train_image_path_list, train_class_symbol = load_image_and_class_symbol(
+        config.dataset.trainImageDirPath_list, config.dataset.trainImageName_classSymbol_list)
+
+    test_image_path_list = load_image_and_class_symbol(config.dataset.testImageDirPath_list,
+                                                       config.dataset.testImageName_list)
+    train_class_id = formate_train_class_num_list(train_class_symbol, className_classSymbol_dict)
+    train_image_path_list, train_class_id = shuffle_dataset(train_image_path_list, train_class_id)
+
+    val_image_path_list, val_class_id, \
+    train_image_path_list, train_label_id = split_dateset(train_image_path_list, train_class_id)
+
+    return val_image_path_list, val_class_id, train_image_path_list, train_label_id
